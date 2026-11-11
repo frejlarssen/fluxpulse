@@ -36,6 +36,33 @@ ctest --test-dir build-mpi --output-on-failure
 MPI is enabled by default in CMake; set `FLUXPULSE_ENABLE_MPI=OFF` explicitly
 for a serial build, as in the first example.
 
+## Optional BLAS backend
+
+The default GEMV backend uses built-in CPU loops (`FLUXPULSE_BLAS_BACKEND=NONE`).
+To use Apple Accelerate on macOS:
+
+```bash
+cmake -S . -B build-accelerate -DCMAKE_BUILD_TYPE=Release \
+  -DFLUXPULSE_ENABLE_MPI=OFF -DFLUXPULSE_BLAS_BACKEND=ACCELERATE
+cmake --build build-accelerate --parallel
+ctest --test-dir build-accelerate --output-on-failure
+```
+
+With Cray LibSci, use the Cray C++ wrapper with the module loaded:
+
+```bash
+module load cray-libsci
+cmake -S . -B build-libsci -DCMAKE_CXX_COMPILER=CC \
+  -DCMAKE_BUILD_TYPE=Release -DFLUXPULSE_ENABLE_MPI=OFF \
+  -DFLUXPULSE_BLAS_BACKEND=LIBSCI
+cmake --build build-libsci --parallel
+ctest --test-dir build-libsci --output-on-failure
+```
+
+Use a separate build directory for each compiler/backend. Accelerate uses its newer
+interface (`ACCELERATE_NEW_LAPACK`). Backend selection applies to the GEMV
+wrapper; some solvers also contain independent matrix multiplication loops.
+
 ## Run an example
 
 From the repository root:

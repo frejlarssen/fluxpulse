@@ -6,6 +6,11 @@ project(fluxpulse LANGUAGES CXX)
 option(FLUXPULSE_ENABLE_WARNINGS "Enable common compiler warnings" ON)
 option(FLUXPULSE_NO_EXCEPTIONS   "Try to compile FluxPulse without C++ exceptions" ON)
 option(FLUXPULSE_ENABLE_MPI      "Build the MPI backend, MPI runner, and MPI tests" ON)
+set(FLUXPULSE_BLAS_BACKEND "NONE" CACHE STRING "GEMV backend: NONE, ACCELERATE, or LIBSCI")
+set_property(CACHE FLUXPULSE_BLAS_BACKEND PROPERTY STRINGS NONE ACCELERATE LIBSCI)
+if(NOT FLUXPULSE_BLAS_BACKEND MATCHES "^(NONE|ACCELERATE|LIBSCI)$")
+  message(FATAL_ERROR "FLUXPULSE_BLAS_BACKEND must be NONE, ACCELERATE, or LIBSCI")
+endif()
 
 # ---- Core library ----
 set(FLUXPULSE_SOURCES
@@ -51,6 +56,20 @@ target_include_directories(fluxpulse
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
+
+# Configure the BLAS backend used by the GEMV wrapper.
+# LibSci is supplied by the Cray CC wrapper with cray-libsci loaded.
+if(FLUXPULSE_BLAS_BACKEND STREQUAL "ACCELERATE")
+  if(NOT APPLE)
+    message(FATAL_ERROR "The ACCELERATE backend requires macOS")
+  endif()
+  find_library(FLUXPULSE_ACCELERATE_LIBRARY Accelerate REQUIRED)
+  target_link_libraries(fluxpulse PRIVATE "${FLUXPULSE_ACCELERATE_LIBRARY}")
+  target_compile_definitions(fluxpulse PRIVATE FLUXPULSE_USE_ACCELERATE ACCELERATE_NEW_LAPACK)
+elseif(FLUXPULSE_BLAS_BACKEND STREQUAL "LIBSCI")
+  target_compile_definitions(fluxpulse PRIVATE FLUXPULSE_USE_CBLAS)
+endif()
+message(STATUS "FluxPulse GEMV backend: ${FLUXPULSE_BLAS_BACKEND}")
 
 if(FLUXPULSE_ENABLE_WARNINGS)
   if(MSVC)
@@ -139,6 +158,7 @@ function(add_fluxpulse_test exe_name src_path)
 endfunction()
 
 # Unit tests
+add_fluxpulse_test(test_blas_gemv                     tests/unit/test_blas_gemv.cpp)
 add_fluxpulse_test(test_time_grid                     tests/unit/test_time_grid.cpp)
 add_fluxpulse_test(test_envelope_eval                 tests/unit/test_envelope_eval.cpp)
 add_fluxpulse_test(test_pulse_program_coeff           tests/unit/test_pulse_program_coeff.cpp)
