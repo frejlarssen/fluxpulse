@@ -51,6 +51,33 @@ int main() {
     assert(y[1].re == 77 && y[1].im == 88);
   }
 
+  // Small nonzero inputs are preserved unless approximation is requested.
+  {
+#if defined(FLUXPULSE_GEMV_DROP_SMALL_VALUES)
+    constexpr Real expected = Real{0};
+#else
+    constexpr Real expected = Real{1};
+#endif
+    const Complex large[] = {{1e8, 0}};
+    const Complex tiny[] = {{1e-8, 0}};
+    const Complex unit[] = {{1, 0}};
+    Complex out[] = {{0, 0}};
+
+    // A small x entry can still give a significant product.
+    blas_gemv_colmajor(1, large, 1, Span<const Complex>(tiny, 1), 1,
+                       Span<Complex>(out, 1), 1, complex_one(), complex_zero());
+    assert(complex_near(out[0], Complex{expected, 0}, kEps));
+
+    // Likewise for small alpha and beta.
+    blas_gemv_colmajor(1, large, 1, Span<const Complex>(unit, 1), 1,
+                       Span<Complex>(out, 1), 1, Complex{1e-8, 0}, complex_zero());
+    assert(complex_near(out[0], Complex{expected, 0}, kEps));
+    out[0] = Complex{1e8, 0};
+    blas_gemv_colmajor(1, unit, 1, Span<const Complex>(unit, 1), 1,
+                       Span<Complex>(out, 1), 1, complex_zero(), Complex{1e-8, 0});
+    assert(complex_near(out[0], Complex{expected, 0}, kEps));
+  }
+
   // beta=0 must overwrite y rather than read its old NaN contents.
   {
     const Complex unit[] = {{1, 0}};

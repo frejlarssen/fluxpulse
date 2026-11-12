@@ -39,6 +39,10 @@ for a serial build, as in the first example.
 ## Optional BLAS backend
 
 The default GEMV backend uses built-in CPU loops (`FLUXPULSE_BLAS_BACKEND=NONE`).
+These use exact-zero checks. To use a small-value approximation,
+set `-DFLUXPULSE_GEMV_DROP_SMALL_VALUES=ON`; this option requires `NONE` and is
+off by default. Exact-zero checks still permit normal floating-point rounding.
+
 To use Apple Accelerate on macOS:
 
 ```bash

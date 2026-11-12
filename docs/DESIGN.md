@@ -33,6 +33,10 @@ CBLAS `zgemv`; vendor-specific types and headers stay private to the wrapper.
 Solver math also contains independent dense multiplication helpers;
 selecting BLAS does not replace those paths.
 
+The `NONE` GEMV backend uses exact-zero checks by default. The optional
+`FLUXPULSE_GEMV_DROP_SMALL_VALUES` setting uses a small-value
+approximation (see `blas_gemv.hpp`) and is only supported with `NONE`.
+
 Owned storage uses vectors. Numerical interfaces use raw pointers or
 `Span<T>`. `Complex` is the project's two-scalar complex type. `FLUXPULSE_HD`
 annotates small helpers for possible device compilation; it does not make

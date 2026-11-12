@@ -32,8 +32,12 @@ using BlasComplex = Complex;
 #endif
 #endif
 
-static inline bool complex_near_zero(Complex z) noexcept {
+static inline bool gemv_is_zero(Complex z) noexcept {
+#if defined(FLUXPULSE_GEMV_DROP_SMALL_VALUES)
   return abs2(z) <= kEpsilon;
+#else
+  return z.re == Real{0} && z.im == Real{0};
+#endif
 }
 
 void blas_gemv_colmajor(Dim n,
@@ -74,7 +78,7 @@ void blas_gemv_colmajor(Dim n,
 #endif
 
   // y <- beta*y
-  if (complex_near_zero(beta)) {
+  if (gemv_is_zero(beta)) {
     Index yi = 0;
     for (Dim i = 0; i < n; ++i, yi += incy) y.data[as_size_t(yi)] = complex_zero();
   } else {
@@ -85,13 +89,13 @@ void blas_gemv_colmajor(Dim n,
     }
   }
 
-  if (complex_near_zero(alpha)) return;
+  if (gemv_is_zero(alpha)) return;
 
   // Column-major GEMV: y += alpha * A * x
   Index xj_idx = 0;
   for (Dim j = 0; j < n; ++j, xj_idx += incx) {
     const Complex xj = x.data[as_size_t(xj_idx)];
-    if (complex_near_zero(xj)) continue;
+    if (gemv_is_zero(xj)) continue;
 
     const Complex t = mul(alpha, xj);
     const Complex* col = A + as_size_t(j * lda);

@@ -10,10 +10,12 @@
 // of kernels.
 //
 // CMake selects FLUXPULSE_BLAS_BACKEND:
-// - NONE: CPU loops, default, treats abs2(z) <= kEpsilon as 0.
+// - NONE: CPU loops, default, with exact-zero checks.
 // - ACCELERATE: macOS CBLAS.
 // - LIBSCI: Cray CBLAS via the CC wrapper.
 // Vendor headers and complex-layout checks live in the implementation.
+// With NONE, FLUXPULSE_GEMV_DROP_SMALL_VALUES=ON uses an approximation
+// that treats alpha, beta, and x entries with abs2(z) <= kEpsilon as zero.
 
 #include "fluxpulse/core/span.hpp"
 #include "fluxpulse/core/types.hpp"
