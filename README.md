@@ -55,11 +55,17 @@ ctest --test-dir build-accelerate --output-on-failure
 With Cray LibSci, use the Cray C++ wrapper with the module loaded:
 
 ```bash
+module load PrgEnv-gnu
+module load gcc/12.2.0
 module load cray-libsci
 cmake -S . -B build-libsci -DCMAKE_CXX_COMPILER=CC \
   -DCMAKE_BUILD_TYPE=Release -DFLUXPULSE_ENABLE_MPI=OFF \
   -DFLUXPULSE_BLAS_BACKEND=LIBSCI
-cmake --build build-libsci --parallel
+cmake --build build-libsci --parallel 8
+```
+
+And on the compute node:
+```bash
 ctest --test-dir build-libsci --output-on-failure
 ```
 
