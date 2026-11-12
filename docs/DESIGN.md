@@ -30,8 +30,9 @@ envelope. Channels are unique within a model and within a program.
 wrapper defaults to CPU loops. `FLUXPULSE_BLAS_BACKEND` selects `NONE`,
 `ACCELERATE` (macOS), or `LIBSCI` (Cray CC wrapper). External backends call
 CBLAS `zgemv`; vendor-specific types and headers stay private to the wrapper.
-Solver math also contains independent dense multiplication helpers;
-selecting BLAS does not replace those paths.
+MCWF effective-Hamiltonian matrix-vector products use `DenseOp::apply()` and
+the selected GEMV backend. Jump and observable calculations, as well as
+Lindblad matrix-matrix products, still use independent loops.
 
 The `NONE` GEMV backend uses exact-zero checks by default. The optional
 `FLUXPULSE_GEMV_DROP_SMALL_VALUES` setting uses a small-value
